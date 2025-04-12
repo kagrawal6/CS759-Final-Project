@@ -3,7 +3,7 @@
 #include <tuple>
 #include "ForexGraph.hpp"
 #include "CsvParser.hpp"
-#include "ArbitrageDetector.hpp"
+//#include "ArbitrageDetector.hpp" not being used
 #include "TimeSeriesArbitrageDetector.hpp"
 #include "PositionsManager.hpp"
 
