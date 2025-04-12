@@ -9,8 +9,7 @@ struct Edge {
   int dest;
   double weight;
 
-  // Negative log transformation converts multiplication of exchange rates to addition of edge weights.
-  // If -log(r₁) - log(r₂) - ... - log(rₙ) < 0, then r₁ × r₂ × ... × rₙ > 1, indicating an arbitrage opportunity.
+  // Negative log turns it into a search for negative cycles
   Edge(int s, int d, double rate) : src(s), dest(d), weight(-std::log(rate)) {}
 };
 
@@ -34,13 +33,17 @@ public:
   }
 
   // Add an exchange rate between two currencies
-  void addExchangeRate(const std::string &from, const std::string &to, double rate) {
+  void addExchangeRate(const std::string &from, const std::string &to, double bid, double ask) {
     int src = addCurrency(from);
     int dest = addCurrency(to);
-    edges.emplace_back(src, dest, rate);
+
+    // use 1 / ask for buying dest with src
+    edges.emplace_back(src, dest, 1.0 / ask);
+
+    // use bid for selling dest to get src
+    edges.emplace_back(dest, src, bid);
   }
 
-  // Add a list of exchange rates
   const std::vector<Edge> &getEdges() const {
     return edges;
   }
