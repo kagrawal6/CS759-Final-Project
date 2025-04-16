@@ -87,7 +87,7 @@ public:
             timestampGraphs[timestamp] = graph;
 
             // Detect arbitrage
-            auto arb = detectArbitrage(graph, false); // silent mode
+            auto arb = detectArbitrage(graph);
 
             if (!arb.cycle.empty())
             {

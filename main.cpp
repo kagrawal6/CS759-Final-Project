@@ -3,7 +3,7 @@
 #include <tuple>
 #include "ForexGraph.hpp"
 #include "CsvParser.hpp"
-//#include "ArbitrageDetector.hpp" not being used
+#include "ArbitrageDetector.hpp"
 #include "TimeSeriesArbitrageDetector.hpp"
 #include "PositionsManager.hpp"
 
@@ -40,7 +40,7 @@ int main()
 
         // Detect arbitrage opportunities
         std::cout << "\nDetecting arbitrage opportunities..." << std::endl;
-        auto arbitrage = detectArbitrage(graph, true); // Set to true for verbose output
+        auto arbitrage = detectArbitrage(graph);
 
         // Print results
         if (arbitrage.cycle.empty())
