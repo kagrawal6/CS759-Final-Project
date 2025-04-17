@@ -3,6 +3,8 @@
 #include <limits>
 #include <iostream>
 #include <iomanip>
+#include <omp.h>
+#include <cmath>
 #include "ForexGraph.hpp"
 
 struct ArbitrageOpportunity {
@@ -10,7 +12,10 @@ struct ArbitrageOpportunity {
     double profit;
 };
 
-ArbitrageOpportunity detectArbitrage(const ForexGraph& graph) {
+ArbitrageOpportunity detectArbitrage(const ForexGraph& graph, int thread_count = 1) {
+    // set thread count for OpenMP
+    omp_set_num_threads(thread_count);
+
     int V = graph.getVertexCount();
     const auto& edges = graph.getEdges();
 
@@ -37,8 +42,20 @@ ArbitrageOpportunity detectArbitrage(const ForexGraph& graph) {
     // Check for negative weight cycles
     ArbitrageOpportunity result;
     result.profit = 0.0;
+    bool found = false;
 
-    for (const auto& edge : edges) {
+    #pragma omp parallel shared(result, found)
+    {
+    ArbitrageOpportunity localResult;
+    localResult.profit = 0.0;
+    bool localFound = false;
+
+    #pragma omp for nowait
+    for (size_t e = 0; e < edges.size(); e++) {
+        // Skip if negative cycle already found
+        if (found) continue;
+
+        const auto& edge = edges[e];
         if (dist[edge.src] != std::numeric_limits<double>::infinity() &&
             dist[edge.src] + edge.weight < dist[edge.dest]) {
 
@@ -86,12 +103,20 @@ ArbitrageOpportunity detectArbitrage(const ForexGraph& graph) {
                 // Calculate actual profit
                 double actualProfit = exp(-logProfit) - 1.0;
 
-                result.cycle = cycle;
-                result.profit = actualProfit * 100.0; // as percentage
-
-                return result;
+                localResult.cycle = cycle;
+                localResult.profit = actualProfit * 100.0; // as percentage
+                localFound = true;
             }
         }
+    }
+    // Update the global result if a better local result is found
+    #pragma omp critical
+    {
+        if (localFound && (result.profit < localResult.profit || !found)) {
+            result = localResult;
+            found = true;
+        }
+    }
     }
     return result;
 }
