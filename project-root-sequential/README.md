@@ -1,4 +1,6 @@
-## FOR MAKEFILE (Works fine) 
+## FOR MAKEFILE 
+
+(Works fine) 
 
 *from project-root/*
 
@@ -7,7 +9,10 @@ make run       # runs ./arbitrage (data/ must be next to this Makefile)
 make clean     # removes .o files and the executable
 
 
-## FOR CMAKELISTS (Stops in Time series analysis at timestamp 46200/66753)
+
+## FOR CMAKELISTS 
+
+(Stops in Time series analysis at timestamp 46200/66753)
 
 *from project-root/*
 
