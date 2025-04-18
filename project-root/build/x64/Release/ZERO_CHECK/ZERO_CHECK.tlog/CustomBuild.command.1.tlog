@@ -1,0 +1,10 @@
+^C:\USERS\KUSHAL AGRAWAL\UW-MADISON SCHOOL WORK\JUNIOR YEAR\SP 25\ECE 759\KUSH_759_FINAL\PROJECT-ROOT\BUILD\CMAKEFILES\C034DA9F68836AAAEEFE0428F7994A16\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" "-SC:/Users/Kushal Agrawal/UW-madison school work/junior year/sp 25/ECE 759/kush_759_final/project-root" "-BC:/Users/Kushal Agrawal/UW-madison school work/junior year/sp 25/ECE 759/kush_759_final/project-root/build" --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file "C:/Users/Kushal Agrawal/UW-madison school work/junior year/sp 25/ECE 759/kush_759_final/project-root/build/ForexArbitrage.sln"
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
