@@ -4,8 +4,8 @@
 
 *from project-root/*
 
-make           # builds ./arbitrage
-make run       # runs ./arbitrage (data/ must be next to this Makefile)
+make           # builds ./arbitrage <br/>
+make run       # runs ./arbitrage (data/ must be next to this Makefile) <br/>
 make clean     # removes .o files and the executable
 
 
@@ -16,12 +16,12 @@ make clean     # removes .o files and the executable
 
 *from project-root/*
 
-mkdir -p build
-cd build
-cmake ..
-cmake --build . --config Release
-cd..
-.\build\Release\arbitrage.exe
+mkdir -p build<br/>
+cd build<br/>
+cmake ..<br/>
+cmake --build . --config Release<br/>
+cd..<br/>
+.\build\Release\arbitrage.exe<br/>
 
 
 
