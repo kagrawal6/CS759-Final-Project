@@ -6,7 +6,7 @@
 #include <omp.h>
 #include <cmath>
 #include "ForexGraph.hpp"
-
+#include <algorithm>
 struct ArbitrageOpportunity {
     std::vector<int> cycle;
     double profit;
