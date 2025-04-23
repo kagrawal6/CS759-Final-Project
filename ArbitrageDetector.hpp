@@ -33,13 +33,16 @@ ArbitrageOpportunity detectArbitrage(const ForexGraph& graph, int thread_count =
         dist[source] = 0;
 
         // Relax all edges V-1 times
-        for (int i = 0; i < V - 1; i++) {
+        bool changed = true;
+        for (int i = 0; i < V - 1 && changed; i++) {
+            changed = false;
             for (const auto& edge : edges) {
                 if (dist[edge.src] != std::numeric_limits<double>::infinity() &&
                     dist[edge.src] + edge.weight < dist[edge.dest]) {
 
                     dist[edge.dest] = dist[edge.src] + edge.weight;
                     predecessor[edge.dest] = edge.src;
+                    changed = true;
                 }
             }
         }
