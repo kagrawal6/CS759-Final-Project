@@ -18,105 +18,127 @@ ArbitrageOpportunity detectArbitrage(const ForexGraph& graph, int thread_count =
 
     int V = graph.getVertexCount();
     const auto& edges = graph.getEdges();
+    
+    // Global best result
+    ArbitrageOpportunity bestResult;
+    bestResult.profit = 0.0;
 
-    // Initialize distance vector
-    std::vector<double> dist(V, std::numeric_limits<double>::infinity());
-    std::vector<int> predecessor(V, -1);
+    // Try each vertex as a source
+    for (int source = 0; source < V; source++) {
+        // Initialize distance vector for this source
+        std::vector<double> dist(V, std::numeric_limits<double>::infinity());
+        std::vector<int> predecessor(V, -1);
+        
+        // Set source distance to 0
+        dist[source] = 0;
 
-    // Choose a source vertex
-    int source = 0;
-    dist[source] = 0;
+        // Relax all edges V-1 times
+        for (int i = 0; i < V - 1; i++) {
+            for (const auto& edge : edges) {
+                if (dist[edge.src] != std::numeric_limits<double>::infinity() &&
+                    dist[edge.src] + edge.weight < dist[edge.dest]) {
 
-    // Relax all edges V-1 times
-    for (int i = 0; i < V - 1; i++) {
-        for (const auto& edge : edges) {
-            if (dist[edge.src] != std::numeric_limits<double>::infinity() &&
-                dist[edge.src] + edge.weight < dist[edge.dest]) {
-
-                dist[edge.dest] = dist[edge.src] + edge.weight;
-                predecessor[edge.dest] = edge.src;
-            }
-        }
-    }
-
-    // Check for negative weight cycles
-    ArbitrageOpportunity result;
-    result.profit = 0.0;
-    bool found = false;
-
-    #pragma omp parallel shared(result, found)
-    {
-    ArbitrageOpportunity localResult;
-    localResult.profit = 0.0;
-    bool localFound = false;
-
-    #pragma omp for nowait
-    for (size_t e = 0; e < edges.size(); e++) {
-        // Skip if negative cycle already found
-        if (found) continue;
-
-        const auto& edge = edges[e];
-        if (dist[edge.src] != std::numeric_limits<double>::infinity() &&
-            dist[edge.src] + edge.weight < dist[edge.dest]) {
-
-            // Negative cycle exists - find it
-            std::vector<bool> visited(V, false);
-            int currVertex = edge.dest;
-
-            // Follow predecessors until we find a cycle
-            while (!visited[currVertex]) {
-                visited[currVertex] = true;
-                currVertex = predecessor[currVertex];
-
-                // Handle case where we can't find a cycle
-                if (currVertex == -1) {
-                    break;
+                    dist[edge.dest] = dist[edge.src] + edge.weight;
+                    predecessor[edge.dest] = edge.src;
                 }
             }
+        }
 
-            if (currVertex != -1) {
-                // We found a cycle, extract it
-                int cycleStart = currVertex;
-                std::vector<int> cycle;
-                double logProfit = 0.0;
+        // Check for negative weight cycles
+        ArbitrageOpportunity result;
+        result.profit = 0.0;
+        bool found = false;
 
-                // Follow the cycle
-                int vertex = cycleStart;
-                do {
-                    cycle.push_back(vertex);
-                    int nextVertex = predecessor[vertex];
+        #pragma omp parallel shared(result, found)
+        {
+            ArbitrageOpportunity localResult;
+            localResult.profit = 0.0;
+            bool localFound = false;
 
-                    // Find the edge from nextVertex to vertex to get its weight
-                    for (const auto& e : edges) {
-                        if (e.src == nextVertex && e.dest == vertex) {
-                            logProfit += e.weight;
+            #pragma omp for nowait
+            for (size_t e = 0; e < edges.size(); e++) {
+                // Skip if negative cycle already found for this source
+                if (found) continue;
+
+                const auto& edge = edges[e];
+                if (dist[edge.src] != std::numeric_limits<double>::infinity() &&
+                    dist[edge.src] + edge.weight < dist[edge.dest]) {
+
+                    // Rest of cycle detection code remains the same
+                    // ...existing code for cycle detection...
+                    
+                    // Negative cycle exists - find it
+                    std::vector<bool> visited(V, false);
+                    int currVertex = edge.dest;
+
+                    // Follow predecessors until we find a cycle
+                    while (!visited[currVertex]) {
+                        visited[currVertex] = true;
+                        currVertex = predecessor[currVertex];
+
+                        // Handle case where we can't find a cycle
+                        if (currVertex == -1) {
                             break;
                         }
                     }
 
-                    vertex = nextVertex;
-                } while (vertex != cycleStart);
+                    if (currVertex != -1) {
+                        // We found a cycle, extract it
+                        int cycleStart = currVertex;
+                        std::vector<int> cycle;
+                        double logProfit = 0.0;
 
-                // Reverse to get correct order
-                std::reverse(cycle.begin(), cycle.end());
+                        // Follow the cycle
+                        int vertex = cycleStart;
+                        do {
+                            cycle.push_back(vertex);
+                            int nextVertex = predecessor[vertex];
 
-                // Calculate actual profit
-                double actualProfit = exp(-logProfit) - 1.0;
+                            // Find the edge from nextVertex to vertex to get its weight
+                            for (const auto& e : edges) {
+                                if (e.src == nextVertex && e.dest == vertex) {
+                                    logProfit += e.weight;
+                                    break;
+                                }
+                            }
 
-                localResult.cycle = cycle;
-                localResult.profit = actualProfit * 100.0; // as percentage
-                localFound = true;
+                            vertex = nextVertex;
+                        } while (vertex != cycleStart);
+
+                        // Reverse to get correct order
+                        std::reverse(cycle.begin(), cycle.end());
+
+                        // Calculate actual profit
+                        double actualProfit = exp(-logProfit) - 1.0;
+
+                        localResult.cycle = cycle;
+                        localResult.profit = actualProfit * 100.0; // as percentage
+                        localFound = true;
+                    }
+                }
+            }
+            
+            // Update the result for this source if a better local result is found
+            #pragma omp critical
+            {
+                if (localFound && (result.profit < localResult.profit || !found)) {
+                    result = localResult;
+                    found = true;
+                }
             }
         }
-    }
-    // Update the global result if a better local result is found
-    #pragma omp critical
-    {
-        if (localFound && (result.profit < localResult.profit || !found)) {
-            result = localResult;
-            found = true;
+        
+        // Update global best result if this source found a better opportunity
+        if (found && (bestResult.profit < result.profit || bestResult.cycle.empty())) {
+            bestResult = result;
+            
+            // Optional: Add debug output to show which source found this opportunity
+            std::cout << "Found better arbitrage opportunity from source " 
+                      << graph.getCurrencyName(source) << " with profit " 
+                      << std::fixed << std::setprecision(4) << bestResult.profit 
+                      << "%" << std::endl;
         }
     }
-    }
-    return result;
+
+    return bestResult;
 }
