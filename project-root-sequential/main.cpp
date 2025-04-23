@@ -6,6 +6,7 @@
 #include "ArbitrageDetector.hpp"
 #include "TimeSeriesArbitrageDetector.hpp"
 #include "PositionsManager.hpp"
+#include "Timer.hpp"
 
 int main()
 {
@@ -32,7 +33,9 @@ int main()
         std::cout << "====== SINGLE TIMESTAMP ANALYSIS ======" << std::endl;
         // Build the forex graph from CSV files (first timestamp only)
         std::cout << "Building forex graph..." << std::endl;
+        Timer tGraph("Graph construction");
         ForexGraph graph = buildForexGraphFromCsvs(currencyFiles);
+        tGraph.stop();
 
         std::cout << "\nGraph construction complete." << std::endl;
         std::cout << "- Number of currencies: " << graph.getVertexCount() << std::endl;
@@ -40,7 +43,9 @@ int main()
 
         // Detect arbitrage opportunities
         std::cout << "\nDetecting arbitrage opportunities..." << std::endl;
+        Timer tDetect("Arbitrage detection");
         auto arbitrage = detectArbitrage(graph);
+        tDetect.stop();
 
         // Print results
         if (arbitrage.cycle.empty())
@@ -76,15 +81,19 @@ int main()
         {
             const auto &opportunity = opportunities[i];
             // Get the graph for this specific timestamp
+            Timer tTrade("Trade execution");
             ForexGraph graph = timeSeriesDetector.getGraphForTimestamp(opportunity.timestamp_ms);
             positionsManager.executeArbitrageOpportunity(opportunity, graph);
+            tTrade.stop();
         }
-
+        Timer tExport("Snapshot/CSV export");
         // Print results
         positionsManager.printCurrentPositions();
         positionsManager.printTradeHistory();
         positionsManager.printPortfolioHistory();
+        tExport.stop();
     }
-
+    // dump all timing data
+    Timer::report();
     return 0;
 }

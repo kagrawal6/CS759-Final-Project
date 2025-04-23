@@ -1,3 +1,4 @@
+//ForexGraph.hpp
 #pragma once
 
 #include <string>

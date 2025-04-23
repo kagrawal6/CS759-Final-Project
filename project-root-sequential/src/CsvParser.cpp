@@ -11,6 +11,8 @@
 #include <cstring>
 #include <cstdlib>
 #include <iostream>
+#include "Timer.hpp"
+
 // parse "DD.MM.YYYY hh:mm:ss.SSS" → ms since midnight
 static int64_t parseTimestampMs(const char *s) {
     int D, M, Y, h, m, sec, ms;
@@ -43,46 +45,132 @@ static void unmapFile(char* data, size_t sz) {
     if (data) munmap(data, sz);
 }
 
+// std::vector<CurrencyPairData> readCurrencyPairCsvs(
+//     const std::string& bi, const std::string& as,
+//     const std::string& base, const std::string& quote)
+// {
+//     Timer tIO("CSV I/O");
+//     size_t bsz, asz;
+//     char *bd = mapFile(bi, bsz), *ad = mapFile(as, asz);
+//     std::vector<CurrencyPairData> out;
+//     if (!bd||!ad) return out;
+//     out.reserve(approximateLineCount(std::min(bsz,asz)));
+
+//     char *bp=bd, *be=bd+bsz, *ap=ad, *ae=ad+asz;
+//     bp = (char*)memchr(bp,'\n',be-bp); ap = (char*)memchr(ap,'\n',ae-ap);
+//     if (!bp||!ap) { unmapFile(bd,bsz); unmapFile(ad,asz); return out; }
+//     bp++; ap++;
+//     tIO.stop();
+//     Timer tParse("Tokenization & parsing");
+//     while(bp<be && ap<ae) {
+//         char *bE=(char*)memchr(bp,'\n',be-bp), *aE=(char*)memchr(ap,'\n',ae-ap);
+//         if(!bE||!aE) break;
+//         *bE = *aE = '\0';
+
+//         char* bt[6]={}; char* t=strtok(bp,",");
+//         for(int i=0;i<6&&t;i++){ bt[i]=t; t=strtok(nullptr,","); }
+//         char* at[6]={}; t=strtok(ap,",");
+//         for(int i=0;i<6&&t;i++){ at[i]=t; t=strtok(nullptr,","); }
+
+//         if(bt[0]&&at[0]&&strcmp(bt[0],at[0])==0) {
+//             CurrencyPairData e;
+//             e.timestamp_ms = parseTimestampMs(bt[0]);
+//             e.baseCurrency = base;
+//             e.quoteCurrency= quote;
+//             e.bid          = std::stod(bt[4]);
+//             e.ask          = std::stod(at[4]);
+//             out.push_back(e);
+//         }
+
+//         bp = bE+1; ap = aE+1;
+//     }
+//     tParse.stop();
+
+//     unmapFile(bd, bsz);
+//     unmapFile(ad, asz);
+    
+//     return out;
+// }
 std::vector<CurrencyPairData> readCurrencyPairCsvs(
-    const std::string& bi, const std::string& as,
-    const std::string& base, const std::string& quote)
+    const std::string& bi,
+    const std::string& as,
+    const std::string& base,
+    const std::string& quote)
 {
-    size_t bsz, asz;
-    char *bd = mapFile(bi, bsz), *ad = mapFile(as, asz);
-    std::vector<CurrencyPairData> out;
-    if (!bd||!ad) return out;
-    out.reserve(approximateLineCount(std::min(bsz,asz)));
-
-    char *bp=bd, *be=bd+bsz, *ap=ad, *ae=ad+asz;
-    bp = (char*)memchr(bp,'\n',be-bp); ap = (char*)memchr(ap,'\n',ae-ap);
-    if (!bp||!ap) { unmapFile(bd,bsz); unmapFile(ad,asz); return out; }
-    bp++; ap++;
-
-    while(bp<be && ap<ae) {
-        char *bE=(char*)memchr(bp,'\n',be-bp), *aE=(char*)memchr(ap,'\n',ae-ap);
-        if(!bE||!aE) break;
-        *bE = *aE = '\0';
-
-        char* bt[6]={}; char* t=strtok(bp,",");
-        for(int i=0;i<6&&t;i++){ bt[i]=t; t=strtok(nullptr,","); }
-        char* at[6]={}; t=strtok(ap,",");
-        for(int i=0;i<6&&t;i++){ at[i]=t; t=strtok(nullptr,","); }
-
-        if(bt[0]&&at[0]&&strcmp(bt[0],at[0])==0) {
-            CurrencyPairData e;
-            e.timestamp_ms = parseTimestampMs(bt[0]);
-            e.baseCurrency = base;
-            e.quoteCurrency= quote;
-            e.bid          = std::stod(bt[4]);
-            e.ask          = std::stod(at[4]);
-            out.push_back(e);
-        }
-
-        bp = bE+1; ap = aE+1;
+    // 1) Map files; bail early if mapping fails
+    size_t bsz = 0, asz = 0;
+    char *bd = mapFile(bi, bsz);
+    char *ad = mapFile(as, asz);
+    if (!bd || !ad) {
+        if (bd) unmapFile(bd, bsz);
+        if (ad) unmapFile(ad, asz);
+        return {};
     }
 
+    // 2) Time just the raw I/O part (mmap + header-skip + reserve)
+    Timer tIO("CSV I/O");
+    std::vector<CurrencyPairData> out;
+    out.reserve(approximateLineCount(std::min(bsz, asz)));
+
+    // Skip headers in both buffers
+    char *bp = static_cast<char*>(memchr(bd, '\n', bsz));
+    char *ap = static_cast<char*>(memchr(ad, '\n', asz));
+    if (!bp || !ap) {
+        // unmap before returning
+        unmapFile(bd, bsz);
+        unmapFile(ad, asz);
+        tIO.stop();
+        return out;
+    }
+    bp++;  // move past newline
+    ap++;
+
+    tIO.stop();
+
+    // 3) Now parse while buffers are still mapped
+    Timer tParse("Tokenization & parsing");
+    char *be = bd + bsz, *ae = ad + asz;
+    while (bp < be && ap < ae) {
+        char *bE = static_cast<char*>(memchr(bp, '\n', be - bp));
+        char *aE = static_cast<char*>(memchr(ap, '\n', ae - ap));
+        if (!bE || !aE) break;
+
+        *bE = *aE = '\0';  // terminate lines
+
+        // tokenize columns
+        char* bt[6] = {};
+        char* tok = std::strtok(bp, ",");
+        for (int i = 0; i < 6 && tok; ++i) {
+            bt[i] = tok;
+            tok = std::strtok(nullptr, ",");
+        }
+        char* at[6] = {};
+        tok = std::strtok(ap, ",");
+        for (int i = 0; i < 6 && tok; ++i) {
+            at[i] = tok;
+            tok = std::strtok(nullptr, ",");
+        }
+
+        // if timestamps match, build a record
+        if (bt[0] && at[0] && std::strcmp(bt[0], at[0]) == 0) {
+            CurrencyPairData e;
+            e.timestamp_ms  = parseTimestampMs(bt[0]);
+            e.baseCurrency  = base;
+            e.quoteCurrency = quote;
+            e.bid           = std::stod(bt[4]);
+            e.ask           = std::stod(at[4]);
+            out.push_back(std::move(e));
+        }
+
+        bp = bE + 1;
+        ap = aE + 1;
+    }
+    tParse.stop();
+
+    // 4) Finally unmap the buffers
     unmapFile(bd, bsz);
     unmapFile(ad, asz);
+
     return out;
 }
 
