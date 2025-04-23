@@ -1,17 +1,15 @@
 #pragma once
-#include <fstream>
-#include <sstream>
+#include <cstdint>
 #include <string>
 #include <vector>
-#include <iostream>
 #include "ForexGraph.hpp"
 
 struct CurrencyPairData {
-    std::string timestamp;
+    int64_t    timestamp_ms;    // was std::string timestamp
     std::string baseCurrency;
     std::string quoteCurrency;
-    double bid;
-    double ask;
+    double     bid;
+    double     ask;
 };
 
 std::vector<CurrencyPairData> readCurrencyPairCsvs(

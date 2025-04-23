@@ -76,7 +76,7 @@ int main()
         {
             const auto &opportunity = opportunities[i];
             // Get the graph for this specific timestamp
-            ForexGraph graph = timeSeriesDetector.getGraphForTimestamp(opportunity.timestamp);
+            ForexGraph graph = timeSeriesDetector.getGraphForTimestamp(opportunity.timestamp_ms);
             positionsManager.executeArbitrageOpportunity(opportunity, graph);
         }
 

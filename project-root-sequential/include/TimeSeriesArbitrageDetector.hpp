@@ -1,6 +1,7 @@
-// include/TimeSeriesArbitrageDetector.hpp
-#pragma once
 
+
+#pragma once
+#include <cstdint>
 #include <vector>
 #include <tuple>
 #include <map>
@@ -9,40 +10,39 @@
 #include "ArbitrageDetector.hpp"
 #include "CsvParser.hpp"
 
-/// Holds a timestamp along with the detected arbitrage opportunity at that time.
+/// Holds an arbitrage opportunity at a given timestamp.
 struct TimeStampedArbitrage {
-    std::string timestamp;
+    int64_t timestamp_ms;
     ArbitrageOpportunity opportunity;
 };
 
-/// Analyzes a series of FX snapshots over time to find arbitrage cycles.
 class TimeSeriesArbitrageDetector {
 public:
-    /// @param files
-    ///   A vector of tuples: (askCsvPath, bidCsvPath, baseCurrency, quoteCurrency)
+    /// files: vector of (askCsv, bidCsv, baseCurrency, quoteCurrency)
     TimeSeriesArbitrageDetector(
-        const std::vector<std::tuple<std::string, std::string, std::string, std::string>>& files);
+        const std::vector<
+          std::tuple<std::string,std::string,std::string,std::string>
+        >& files
+    );
 
-    /// Runs arbitrage detection on each timestamp in the loaded data.
-    /// @param verbose  If true, prints detailed cycle information as it finds opportunities.
+    /// Scan all timestamps; if verbose, print progress and cycles found.
     void analyzeAllTimestamps(bool verbose = false);
 
-    /// Prints all opportunities found across the entire time series.
-    void printAllOpportunities();
+    /// Print all found arbitrage opportunities.
+    void printAllOpportunities() const;
 
-    /// Returns the list of all detected opportunities with their timestamps.
+    /// Get the list of found opportunities.
     const std::vector<TimeStampedArbitrage>& getOpportunities() const;
 
-    /// Retrieves the FX graph built for a specific timestamp.
-    /// If the graph was cached during analysis, returns that; otherwise rebuilds it.
-    ForexGraph getGraphForTimestamp(const std::string& timestamp) const;
+    /// Rebuild (or fetch cached) graph for a specific timestamp.
+    ForexGraph getGraphForTimestamp(int64_t timestamp_ms) const;
 
 private:
-    /// Loads and groups all CSV data by timestamp.
     void loadAllData();
 
-    std::vector<std::tuple<std::string, std::string, std::string, std::string>> currencyFiles;
-    std::map<std::string, std::vector<CurrencyPairData>> timeSeriesData;
-    std::map<std::string, ForexGraph>                     timestampGraphs;
-    std::vector<TimeStampedArbitrage>                     arbitrageOpportunities;
+    std::vector<std::tuple<std::string,std::string,std::string,std::string>> currencyFiles;
+    std::map<int64_t,std::vector<CurrencyPairData>> timeSeriesData;
+    std::map<int64_t,ForexGraph>                    timestampGraphs;
+    std::vector<TimeStampedArbitrage>               arbitrageOpportunities;
 };
+

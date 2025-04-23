@@ -18,7 +18,8 @@ struct Edge {
 class ForexGraph {
 public:
     ForexGraph();
-
+	/// Reserve space in the internal edge array to avoid reallocations
+	void reserveEdges(size_t n) { edges.reserve(n); }
     /// Add a currency if missing, return its internal ID
     int addCurrency(const std::string &currency);
 

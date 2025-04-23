@@ -1,6 +1,8 @@
-// include/PositionsManager.hpp
+
+
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <vector>
 #include <map>
@@ -10,32 +12,32 @@
 
 /// Records a single trade execution.
 struct TradeExecution {
-    std::string timestamp;
-    std::string fromCurrency;
-    std::string toCurrency;
-    double fromAmount;
-    double toAmount;
-    double rate;
+    int64_t      timestamp_ms;
+    std::string  fromCurrency;
+    std::string  toCurrency;
+    double       fromAmount;
+    double       toAmount;
+    double       rate;
 };
 
 /// Snapshot of all positions and total USD value at a given time.
 struct PortfolioSnapshot {
-    std::string timestamp;
-    std::unordered_map<std::string, double> positions;
-    double totalValueUSD;
+    int64_t                                    timestamp_ms;
+    std::unordered_map<std::string,double>     positions;
+    double                                     totalValueUSD;
 };
 
 /// Manages positions, executes arbitrage trades, and tracks history.
 class PositionsManager {
 public:
-    /// @param base    The base (reference) currency, e.g. "USD"
-    /// @param capital Initial amount in base currency
-    PositionsManager(const std::string& base = "USD",
-                     double capital = 1'000'000.0);
+    /// @param baseCurrency   Code of base/reference currency (e.g. "USD")
+    /// @param initialCapital Starting capital in base currency
+    PositionsManager(const std::string& baseCurrency = "USD",
+                     double initialCapital = 1e6);
 
     /// (Optional) Provide USD conversion rates per timestamp
     void setUSDRates(
-        const std::map<std::string,
+        const std::map<int64_t,
             std::map<std::string, double>>& rates);
 
     /// Execute one arbitrage opportunity on the given graph
@@ -54,15 +56,12 @@ public:
 
 private:
     /// Recompute and record a portfolio snapshot at the given timestamp
-    void updatePortfolioSnapshot(const std::string& timestamp);
+    void updatePortfolioSnapshot(int64_t timestamp_ms);
 
-    std::unordered_map<std::string, double> positions;
-    std::vector<TradeExecution> tradeHistory;
-    std::vector<PortfolioSnapshot> portfolioHistory;
-    std::string baseCurrency;
-    double initialCapital;
-
-    /// Mapping: timestamp → (currency → USD rate)
-    std::map<std::string,
-             std::map<std::string, double>> usdRates;
+    std::string                                        baseCurrency;
+    double                                             initialCapital;
+    std::unordered_map<std::string,double>             positions;
+    std::vector<TradeExecution>                        tradeHistory;
+    std::vector<PortfolioSnapshot>                     portfolioHistory;
+    std::map<int64_t, std::map<std::string,double>>    usdRates;
 };
