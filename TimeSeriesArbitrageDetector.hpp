@@ -5,6 +5,7 @@
 #include "ForexGraph.hpp"
 #include "ArbitrageDetector.hpp"
 #include "CsvParser.hpp"
+#include <chrono>
 
 struct TimeStampedArbitrage
 {
@@ -16,6 +17,7 @@ class TimeSeriesArbitrageDetector
 {
 private:
     std::vector<std::tuple<std::string, std::string, std::string, std::string>> currencyFiles;
+    std::chrono::duration<double> totalArbitrageDetectionTime{};
     std::map<std::string, std::vector<CurrencyPairData>> timeSeriesData;
     std::map<std::string, ForexGraph> timestampGraphs;
     std::vector<TimeStampedArbitrage> arbitrageOpportunities;
@@ -87,7 +89,10 @@ public:
             timestampGraphs[timestamp] = graph;
 
             // Detect arbitrage
-            auto arb = detectArbitrage(graph);
+            auto start = std::chrono::high_resolution_clock::now();
+            auto arb = detectArbitrage(graph, 1);
+            auto end = std::chrono::high_resolution_clock::now();
+            totalArbitrageDetectionTime += end - start;
 
             if (!arb.cycle.empty())
             {
@@ -119,6 +124,8 @@ public:
         std::cout << "\nAnalysis complete." << std::endl;
         std::cout << "Found " << arbitrageOpportunities.size()
                   << " arbitrage opportunities across " << totalTimestamps << " timestamps." << std::endl;
+        std::cout << "Total time spent in detectArbitrage: "
+                  << totalArbitrageDetectionTime.count() << " seconds";
     }
 
     void printAllOpportunities()
