@@ -26,8 +26,11 @@ void ForexGraph::addExchangeRate(const std::string &from,
     int dest = addCurrency(to);
 
     // 1/ask for buy, bid for sell
-    edges.emplace_back(src,  dest, 1.0 / ask);
-    edges.emplace_back(dest, src,  bid);
+    //edges.emplace_back(src,  dest, 1.0 / ask);
+    //edges.emplace_back(dest, src,  bid);
+    edges.emplace_back(src, dest, bid);
+    edges.emplace_back(dest, src, 1.0 / ask);
+
 }
 
 const std::vector<Edge> &ForexGraph::getEdges() const {
