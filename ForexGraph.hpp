@@ -38,10 +38,10 @@ public:
     int dest = addCurrency(to);
 
     // use 1 / ask for buying dest with src
-    edges.emplace_back(src, dest, 1.0 / ask);
+    edges.emplace_back(src, dest, bid);
 
     // use bid for selling dest to get src
-    edges.emplace_back(dest, src, bid);
+    edges.emplace_back(dest, src, 1.0 / ask);
   }
 
   const std::vector<Edge> &getEdges() const {

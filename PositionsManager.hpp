@@ -124,7 +124,7 @@ public:
         
         // Execute each leg of the arbitrage
         double currentAmount = tradeAmount;
-        positions[startCurrency] -= tradeAmount;  // Subtract from starting currency
+        // positions[startCurrency] -= tradeAmount;  // Subtract from starting currency
         
         // Reorder the cycle to start from our currency
         std::vector<int> reorderedCycle;
@@ -162,6 +162,7 @@ public:
                               << " (rate: " << rate << ")" << std::endl;
                     
                     // Update position
+                    positions[fromCurrency] -= currentAmount;
                     positions[toCurrency] += newAmount;
                     currentAmount = newAmount;
                     break;

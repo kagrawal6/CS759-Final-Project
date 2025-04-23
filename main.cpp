@@ -82,11 +82,12 @@ int main()
         std::cout << "\n====== TRADING SIMULATION ======" << std::endl;
 
         // Initialize with 1 million USD
-        PositionsManager positionsManager("USD", 1000000.0);
+        PositionsManager positionsManager("USD", 1000.0);
 
         // Execute the first 5 arbitrage opportunities (or all if less than 5)
         const auto &opportunities = timeSeriesDetector.getOpportunities();
-        int numToExecute = std::min(5, (int)opportunities.size());
+        int numToExecute = (int)opportunities.size();
+        // int numToExecute = 5;
 
         for (int i = 0; i < numToExecute; i++)
         {
