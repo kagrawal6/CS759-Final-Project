@@ -71,7 +71,7 @@ int main()
         else
         {
             std::cout << "Found arbitrage opportunity with " << std::fixed << std::setprecision(4)
-                      << arbitrage.profit << "% profit." << std::endl;
+                      << arbitrage.profit << "\% profit." << std::endl;
         }
     }
 
