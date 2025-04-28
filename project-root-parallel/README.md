@@ -1,4 +1,6 @@
-Parallel implementation
+## Parallel implementation
+
+```bash
 make               # compile everything
 make run-seq       # run sequentially (1 thread)
 make run-parallel  # run with 4 threads
