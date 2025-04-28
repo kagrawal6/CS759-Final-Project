@@ -17,6 +17,8 @@ SRC := \
 # Object files
 OBJ := $(SRC:.cpp=.o)
 
+OBJ_NOMAIN := $(filter-out main.o,$(OBJ))
+
 # Final executable
 TARGET := arbitrage
 
@@ -47,3 +49,19 @@ run-parallel: all
 clean:
 	rm -f $(OBJ) $(TARGET)
 
+# Benchmark target:
+benchmark: benchmark.cpp $(OBJ_NOMAIN)
+	$(CXX) $(CXXFLAGS) -o $@ benchmark.cpp $(OBJ_NOMAIN) $(LDFLAGS)
+
+.PHONY: bench-csv
+bench-csv: benchmark
+	@echo "Cleaning up old results…"
+	@rm -f benchmark_results.csv
+	@echo "Running benchmark and writing to benchmark_results.csv…"
+	@./benchmark > benchmark_results.csv
+	@echo "Done."
+
+.PHONY: bench
+bench: benchmark
+	@echo "Running benchmark…"
+	@./benchmark

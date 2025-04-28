@@ -18,7 +18,7 @@ void PositionsManager::setUSDRates(const std::map<std::string, std::map<std::str
 void PositionsManager::executeArbitrageOpportunity(const TimeStampedArbitrage& opportunity, const ForexGraph& graph) {
     int64_t ts = opportunity.timestamp_ms;
     const auto& cycle = opportunity.opportunity.cycle;
-    std::cout << "Executing arbitrage at ms " << ts << ":" << std::endl;
+    //std::cout << "Executing arbitrage at ms " << ts << ":" << std::endl;
 
     int startIndex = 0;
     std::string startCurrency;
@@ -35,7 +35,7 @@ void PositionsManager::executeArbitrageOpportunity(const TimeStampedArbitrage& o
 
     if (availableAmount == 0.0) {
         startCurrency = graph.getCurrencyName(cycle[0]);
-        std::cout << "  No positions in any cycle currency. Converting from base." << std::endl;
+        //std::cout << "  No positions in any cycle currency. Converting from base." << std::endl;
         double conversionAmount = positions[baseCurrency] * 0.05;
         double conversionRate = 0.0;
         for (const auto& edge : graph.getEdges()) {
@@ -46,23 +46,23 @@ void PositionsManager::executeArbitrageOpportunity(const TimeStampedArbitrage& o
             }
         }
         if (conversionRate > 0.0) {
-            std::cout << "  Converting " << std::fixed << std::setprecision(2) << conversionAmount
-                      << " " << baseCurrency << " to " << startCurrency << std::endl;
+            //std::cout << "  Converting " << std::fixed << std::setprecision(2) << conversionAmount
+                      //<< " " << baseCurrency << " to " << startCurrency << std::endl;
             double newAmount = conversionAmount * conversionRate;
             positions[baseCurrency] -= conversionAmount;
             positions[startCurrency] += newAmount;
             availableAmount = newAmount;
             tradeHistory.push_back({ts, baseCurrency, startCurrency, conversionAmount, newAmount, conversionRate});
         } else {
-            std::cout << "  Couldn't find conversion rate from " << baseCurrency
-                      << " to " << startCurrency << ". Skipping." << std::endl;
+            //std::cout << "  Couldn't find conversion rate from " << baseCurrency
+                      //<< " to " << startCurrency << ". Skipping." << std::endl;
             return;
         }
     }
 
     double tradeAmount = availableAmount * 0.5;
-    std::cout << "  Using " << std::fixed << std::setprecision(6) << tradeAmount
-              << " " << startCurrency << " (available " << availableAmount << ")" << std::endl;
+    //std::cout << "  Using " << std::fixed << std::setprecision(6) << tradeAmount
+             // << " " << startCurrency << " (available " << availableAmount << ")" << std::endl;
     double currentAmount = tradeAmount;
     std::vector<int> reordered;
     for (size_t i = startIndex; i < cycle.size() + startIndex; ++i)
@@ -78,9 +78,9 @@ void PositionsManager::executeArbitrageOpportunity(const TimeStampedArbitrage& o
                 double rate = std::exp(-edge.weight);
                 double newAmount = currentAmount * rate;
                 tradeHistory.push_back({ts, fromCurr, toCurr, currentAmount, newAmount, rate});
-                std::cout << "  Convert " << std::fixed << std::setprecision(6)
-                          << currentAmount << " " << fromCurr << " to " << newAmount
-                          << " " << toCurr << " (rate: " << rate << ")" << std::endl;
+                //std::cout << "  Convert " << std::fixed << std::setprecision(6)
+                          //<< currentAmount << " " << fromCurr << " to " << newAmount
+                          //<< " " << toCurr << " (rate: " << rate << ")" << std::endl;
                 positions[fromCurr] -= currentAmount;
                 positions[toCurr] += newAmount;
                 currentAmount = newAmount;
@@ -106,10 +106,10 @@ void PositionsManager::updatePortfolioSnapshot(int64_t timestamp_ms) {
     portfolioHistory.push_back(snapshot);
     double profit = totalUSD - initialCapital;
     double profitPct = (profit / initialCapital) * 100.0;
-    std::cout << "  Portfolio value at ms " << timestamp_ms << ": $"
-              << std::fixed << std::setprecision(2) << totalUSD
-              << " (Profit: $" << profit << ", " << std::setprecision(4)
-              << profitPct << "% )" << std::endl;
+    //std::cout << "  Portfolio value at ms " << timestamp_ms << ": $"
+              //<< std::fixed << std::setprecision(2) << totalUSD
+              //<< " (Profit: $" << profit << ", " << std::setprecision(4)
+              //<< profitPct << "% )" << std::endl;
 }
 
 void PositionsManager::printCurrentPositions() const {
@@ -136,4 +136,7 @@ void PositionsManager::printPortfolioHistory() const {
         std::cout << s.timestamp_ms << ": Total = $" << std::fixed
                   << std::setprecision(2) << s.totalValueUSD << std::endl;
     }
+}
+const std::vector<PortfolioSnapshot>& PositionsManager::getPortfolioHistory() const {
+    return portfolioHistory;
 }

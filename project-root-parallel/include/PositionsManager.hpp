@@ -43,5 +43,6 @@ public:
     void printCurrentPositions() const;
     void printTradeHistory() const;
     void printPortfolioHistory() const;
+    const std::vector<PortfolioSnapshot>& getPortfolioHistory() const;
 };
 
