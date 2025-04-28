@@ -1,0 +1,1 @@
+Test the arbitrage mapping, graph, arbitrage detection and metric working with a small predetermined graph

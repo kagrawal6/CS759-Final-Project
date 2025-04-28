@@ -1,0 +1,1 @@
+Instructions on how to run scripts for Euler that will run program, benchmarks, tests, etc. Could contain python/matlab scripts to plot data
