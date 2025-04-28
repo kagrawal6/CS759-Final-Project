@@ -223,7 +223,7 @@ int main() {
     const double initial_capital = 1000.0;
 
     // CSV header
-    std::cout << "threads,mean_wall_ms,stddev_wall_ms,mean_cpu_ms,stddev_cpu_ms,";
+    std::cout << "threads,mean_wall_ms,stddev_wall_ms,mean_cpu_ms,";
     std::cout << "speedup,efficiency,f_e,mean_profit_usd,profit_usd_per_s,trade_count\n";
 
     // Serial baseline (full run)

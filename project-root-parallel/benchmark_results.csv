@@ -1,4 +1,4 @@
-threads,mean_wall_ms,stddev_wall_ms,mean_cpu_ms,stddev_cpu_ms,speedup,efficiency,f_e,mean_profit_usd,profit_usd_per_s,trade_count
+threads,mean_wall_ms,stddev_wall_ms,mean_cpu_ms,speedup,efficiency,f_e,mean_profit_usd,profit_usd_per_s,trade_count
 1,1388.06,5.17474,1385.44,1.15579,1.15579,-inf,7.10034,5.11529,680
 2,902.919,23.2425,1711.86,1.7768,0.888399,0.12562,7.10034,7.86376,680
 3,680.43,27.6674,1887.07,2.35778,0.785927,0.136192,7.10034,10.4351,680
